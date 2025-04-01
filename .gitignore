@@ -24,9 +24,10 @@ wheels/
 *.egg
 
 # Virtual Environment
-llm_env/
 venv/
+env/
 ENV/
+llm_env/
 
 # IDE
 .idea/
@@ -40,4 +41,20 @@ ENV/
 htmlcov/
 
 # Logs
-*.log 
+*.log
+
+# Project specific
+test_results/
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.safetensors
+
+# Data
+data/*.json
+!data/dev_data.json
+
+# SOL specific
+*.out
+*.err 
