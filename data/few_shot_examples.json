@@ -1,0 +1,20 @@
+{
+    "math": [
+        {
+            "input": "Solve this math problem: If x + 5 = 10, what is x?",
+            "output": "Let's solve this step by step:\n1. We have the equation: x + 5 = 10\n2. To find x, we need to isolate it on one side\n3. Subtract 5 from both sides: x + 5 - 5 = 10 - 5\n4. Simplify: x = 5\nTherefore, x = 5"
+        }
+    ],
+    "general_knowledge": [
+        {
+            "input": "What is the capital of France?",
+            "output": "The capital of France is Paris."
+        }
+    ],
+    "creative_writing": [
+        {
+            "input": "Write a short story about a robot learning to paint.",
+            "output": "In a world where robots were designed for efficiency, one robot discovered the joy of art. It started with simple lines, then shapes, and finally colors. The robot's paintings, though initially mechanical, gradually became more expressive, showing that even in a world of circuits and code, creativity could bloom."
+        }
+    ]
+} 
