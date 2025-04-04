@@ -59,7 +59,10 @@ class LLMWrapper:
 
     def configure_pipeline(self, config_type: str = "default"):
         """Configure the text generation pipeline with predefined parameters."""
+        # Get the generation configuration for the specified type
         config = self.get_generation_config(config_type)
+        
+        # Create the pipeline with the configuration
         return pipeline(
             "text-generation",
             model=self.model,
@@ -74,16 +77,16 @@ class LLMWrapper:
     def format_prompt(self, system_prompt: str, user_input: str, task_type: str = "general") -> str:
         """Format the prompt with system and user messages."""
         config_prompt = self.get_config_prompt(task_type)
-        return f"""System: {system_prompt} {config_prompt}
+        return f"""[System Message]: {system_prompt} {config_prompt}
 
-User: {user_input}
+[User Message]: {user_input}
 
-Response:"""
+[Assistant Message]:"""
 
     def generate_text(
         self, 
         input_text: str,
-        system_prompt: str = "You are a helpful AI assistant. Please provide your response after the User's question. Make sure to be clear, accurate, and follow the task-specific guidelines provided below.",
+        system_prompt: str = "You are a helpful AI assistant. Please provide your response to the [User Message] after the [Assistant Message] tag. Make sure to be clear, accurate, and follow the task-specific guidelines provided below. After you provide your response, you should stop generating.",
         task_type: str = "general",
         config_type: str = "default",
         display_markdown: bool = False
@@ -93,15 +96,19 @@ Response:"""
             # Format the prompt
             prompt = self.format_prompt(system_prompt, input_text, task_type)
             
-            # Configure pipeline with custom parameters if needed
-            if config_type != "default":
-                self.pipe = self.configure_pipeline(config_type)
+            # Configure pipeline with the specified config type
+            self.pipe = self.configure_pipeline(config_type)
             
-            # Generate response
+            # Generate response using the configured pipeline
             outputs = self.pipe(prompt)
             
-            # Extract the response (everything after "Assistant:")
-            response = outputs[0]["generated_text"].split("Assistant:")[-1].strip()
+            # Extract the response (everything after "Response:")
+            full_text = outputs[0]["generated_text"]
+            response_start = full_text.find("[Assistant Message]:") + len("[Assistant Message]:")
+            response = full_text[response_start:].strip()
+            
+            # Remove any system prompts or user questions that might have been repeated
+            response = response.split("System:")[0].split("User's Question:")[0].strip()
             
             # Display as markdown if requested
             if display_markdown:

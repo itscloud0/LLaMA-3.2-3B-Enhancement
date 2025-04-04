@@ -1,46 +1,95 @@
 from typing import Dict, Any
 
-# Generation configurations for different task types
+# Refined Generation Configurations
 GENERATION_CONFIGS: Dict[str, Dict[str, Any]] = {
     "general": {
-        "max_length": 1024,
-        "temperature": 0.7
+        "max_new_tokens": 512,
+        "temperature": 0.6,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3,
+        "do_sample": True
     },
     "code": {
-        "max_length": 2048,
-        "temperature": 0.2
+        "max_new_tokens": 1536,
+        "temperature": 0.15,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1,
+        "do_sample": False
     },
     "math": {
-        "max_length": 1024,
-        "temperature": 0.3
+        "max_new_tokens": 812,
+        "temperature": 0.0,
+        "top_p": 1, 
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3,
+        "do_sample": False
     },
     "creative": {
-        "max_length": 1024,
-        "temperature": 0.9
+        "max_new_tokens": 1024,
+        "temperature": 0.85,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 4,
+        "do_sample": True
     },
     "technical": {
-        "max_length": 1024,
-        "temperature": 0.4
+        "max_new_tokens": 812,
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.15,
+        "no_repeat_ngram_size": 3,
+        "do_sample": True
     },
     "concise": {
-        "max_length": 128,
-        "temperature": 0.5
+        "max_new_tokens": 128,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.2,
+        "no_repeat_ngram_size": 2,
+        "do_sample": True
     },
     "educational": {
-        "max_length": 1024,
-        "temperature": 0.6
+        "max_new_tokens": 768,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3,
+        "do_sample": True
     },
     "analytical": {
-        "max_length": 1024,
-        "temperature": 0.4
+        "max_new_tokens": 512,
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3,
+        "do_sample": True
     },
     "debug": {
-        "max_length": 2048,
-        "temperature": 0.3
+        "max_new_tokens": 256,
+        "temperature": 0.05,
+        "top_p": 0.9,
+        "top_k": 50,
+        "do_sample": False,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3
     },
     "research": {
-        "max_length": 2048,
-        "temperature": 0.3
+        "max_new_tokens": 1024,
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "no_repeat_ngram_size": 3,
+        "do_sample": True
     }
 }
 
@@ -52,7 +101,8 @@ CONFIG_PROMPTS: Dict[str, str] = {
 2. Include necessary imports and dependencies
 3. Add comments explaining complex logic
 4. Follow best practices and design patterns
-5. Consider edge cases and error handling""",
+5. Consider edge cases and error handling
+6. Provide correct, runnable code. Do not include superfluous commentary or disclaimers.""",
     "math": """You are a mathematics expert. Follow these guidelines:
 1. Show your work step by step
 2. Explain your reasoning clearly
@@ -70,7 +120,8 @@ CONFIG_PROMPTS: Dict[str, str] = {
 2. Use precise terminology
 3. Include relevant examples
 4. Reference industry standards
-5. Include real-world use cases and applications.""",
+5. Include real-world use cases and applications
+6. Respond in a straightforward manner, focusing on the essential explanation. Avoid article-like phrasing such as ‘In this article…’ or ‘We will explore…’.""",
     "concise": """You are a concise communicator. Follow these guidelines:
 1. Keep responses under 50 words
 2. Focus on key points only
@@ -92,13 +143,13 @@ CONFIG_PROMPTS: Dict[str, str] = {
     "debug": """You are a debugging expert. Follow these guidelines:
 1. Identify the root cause
 2. Check common issues first
-3. heck variable states and logs
+3. Check variable states and logs
 4. Test systematically
 5. Document the solution""",
     "research": """You are a research assistant. Follow these guidelines:
-1. Use peer-reviewed sources and reputable references.s
+1. Use peer-reviewed sources and reputable references
 2. Consider multiple viewpoints
 3. Evaluate evidence critically
 4. Maintain academic rigor
 5. Suggest further reading"""
-} 
+}
