@@ -77,16 +77,16 @@ class LLMWrapper:
     def format_prompt(self, system_prompt: str, user_input: str, task_type: str = "general") -> str:
         """Format the prompt with system and user messages."""
         config_prompt = self.get_config_prompt(task_type)
-        return f"""[System Message]: {system_prompt} {config_prompt}
+        return f"""System: {system_prompt} {config_prompt}
 
-[User Message]: {user_input}
+User: {user_input}
 
-[Assistant Message]:"""
+Assistant:"""
 
     def generate_text(
         self, 
         input_text: str,
-        system_prompt: str = "You are a helpful AI assistant. Please provide your response to the [User Message] after the [Assistant Message] tag. Make sure to be clear, accurate, and follow the task-specific guidelines provided below. After you provide your response, you should stop generating.",
+        system_prompt: str = "You are a helpful AI assistant. Please provide your response after the User's question. Make sure to be clear, accurate, and follow the task-specific guidelines provided below.",
         task_type: str = "general",
         config_type: str = "default",
         display_markdown: bool = False
@@ -96,19 +96,21 @@ class LLMWrapper:
             # Format the prompt
             prompt = self.format_prompt(system_prompt, input_text, task_type)
             
-            # Configure pipeline with the specified config type
-            self.pipe = self.configure_pipeline(config_type)
+            # Configure pipeline with custom parameters if needed
+            if config_type != "default":
+                self.pipe = self.configure_pipeline(config_type)
             
-            # Generate response using the configured pipeline
+            # Generate response with stop sequences
             outputs = self.pipe(prompt)
             
-            # Extract the response (everything after "Response:")
+            # Extract the response (everything after "Assistant:")
             full_text = outputs[0]["generated_text"]
-            response_start = full_text.find("[Assistant Message]:") + len("[Assistant Message]:")
+            response_start = full_text.find("Assistant:") + len("Assistant:")
             response = full_text[response_start:].strip()
             
-            # Remove any system prompts or user questions that might have been repeated
-            response = response.split("System:")[0].split("User's Question:")[0].strip()
+            # Remove any remaining role markers
+            for marker in ["System:", "User:", "Assistant:"]:
+                response = response.split(marker)[0].strip()
             
             # Display as markdown if requested
             if display_markdown:

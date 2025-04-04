@@ -4,4 +4,6 @@ accelerate>=0.20.0
 bitsandbytes>=0.41.0
 sentencepiece>=0.1.99
 python-dotenv>=1.0.0
-ipython>=8.0.0 
+ipython>=8.0.0
+flask>=2.0.0
+flask-cors>=3.0.0 
