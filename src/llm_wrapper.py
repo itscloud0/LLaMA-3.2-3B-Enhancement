@@ -1,93 +1,112 @@
-import json
 import torch
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
 import os
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from dotenv import load_dotenv
+from IPython.display import Markdown, display
+from typing import Dict, Any, List
+from config import GENERATION_CONFIGS, CONFIG_PROMPTS
+
+# Load environment variables from .env file
+load_dotenv()
 
 class LLMWrapper:
-    def __init__(self):
+    def __init__(self, model_path: str = "meta-llama/Llama-3.2-3B"):
         """Initialize the LLM wrapper with Llama-3.2-3B."""
         try:
-            model_id = "meta-llama/Llama-3.2-3B"
-            HF_TOKEN = os.getenv("HF_TOKEN")
+            self.model_id = model_path
+            self.HF_TOKEN = os.getenv("HF_TOKEN")
+            if not self.HF_TOKEN:
+                raise ValueError("HF_TOKEN environment variable is not set")
             
-            # Check if CUDA is available
-            if not torch.cuda.is_available():
-                print("Warning: CUDA is not available. Using CPU instead.")
-                device = "cpu"
-            else:
-                device = "cuda"
-                print(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
-            
-            # Initialize tokenizer and model separately for better control
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_id,
-                token=HF_TOKEN,
-                trust_remote_code=True
-            )
-            
+            print("Loading model...")
+            # Load the model and tokenizer
             self.model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                token=HF_TOKEN,
-                torch_dtype=torch.bfloat16,
+                model_path, 
+                low_cpu_mem_usage=True,
+                torch_dtype=torch.float16,  
+                return_dict=True,
                 device_map="auto",
+                token=self.HF_TOKEN,
                 trust_remote_code=True
             )
-            
-            # Initialize pipeline with better parameters
-            self.generator = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_path,
+                token=self.HF_TOKEN
             )
             
-            # Set improved generation parameters based on the tutorial
-            self.generation_params = {
-                "max_new_tokens": 500,  # Control output length directly
-                #"num_return_sequences": 1,
-                #"temperature": 0.3,  # Lower temperature for more focused responses
-                #"top_p": 0.95,  # Higher top_p for better quality
-                #"top_k": 50,  # Added top_k sampling
-                "do_sample": True,
-                "repetition_penalty": 1.2,  # Added to prevent repetition
-                "length_penalty": 1.0,  # Added to control response length
-                "pad_token_id": self.tokenizer.eos_token_id,
-                "eos_token_id": self.tokenizer.eos_token_id,
-                #"truncation": True  # Added to handle long inputs
-            }
+            # Configure tokenizer and model padding
+            if self.tokenizer.pad_token_id is None:
+                self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+            if self.model.config.pad_token_id is None:
+                self.model.config.pad_token_id = self.model.config.eos_token_id
             
-            print(f"Model {model_id} loaded successfully")
+            # Initialize pipeline with default configuration
+            self.pipe = self.configure_pipeline()
+            
+            print(f"Model {model_path} loaded successfully")
             
         except Exception as e:
             print(f"Error initializing model: {e}")
             raise
 
-    def generate_text(self, prompt: str) -> str:
-        """Generate text response for the given prompt."""
+    def get_generation_config(self, config_type: str = "default") -> Dict[str, Any]:
+        """Get predefined generation configurations."""
+        return GENERATION_CONFIGS.get(config_type, GENERATION_CONFIGS["general"])
+
+    def get_config_prompt(self, task_type: str = "general") -> str:
+        """Get configuration prompt based on task type."""
+        return CONFIG_PROMPTS.get(task_type, CONFIG_PROMPTS["general"])
+
+    def configure_pipeline(self, config_type: str = "default"):
+        """Configure the text generation pipeline with predefined parameters."""
+        config = self.get_generation_config(config_type)
+        return pipeline(
+            "text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            token=self.HF_TOKEN,
+            trust_remote_code=True,
+            **config
+        )
+
+    def format_prompt(self, system_prompt: str, user_input: str, task_type: str = "general") -> str:
+        """Format the prompt with system and user messages."""
+        config_prompt = self.get_config_prompt(task_type)
+        return f"""System: {system_prompt} {config_prompt}
+
+User: {user_input}
+
+Response:"""
+
+    def generate_text(
+        self, 
+        input_text: str,
+        system_prompt: str = "You are a helpful AI assistant. Please provide your response after the User's question. Make sure to be clear, accurate, and follow the task-specific guidelines provided below.",
+        task_type: str = "general",
+        config_type: str = "default",
+        display_markdown: bool = False
+    ) -> str:
+        """Generate text response for the given input."""
         try:
-            # Format the prompt with better instruction tuning
-            formatted_prompt = f"""You are a helpful AI assistant. 
-            Please provide a clear, accurate, and detailed response to the following question or task.
-            Question: {prompt}
-            Answer: Let me help you with that."""
+            # Format the prompt
+            prompt = self.format_prompt(system_prompt, input_text, task_type)
             
-            # Generate response with parameters
-            sequences = self.generator(
-                formatted_prompt,
-                **self.generation_params
-            )
+            # Configure pipeline with custom parameters if needed
+            if config_type != "default":
+                self.pipe = self.configure_pipeline(config_type)
             
-            # Extract the response (everything after "Answer:")
-            gen_text = sequences[0]["generated_text"]
-            response_start = gen_text.find("Answer:") + len("Answer:")
-            response = gen_text[response_start:].strip()
+            # Generate response
+            outputs = self.pipe(prompt)
             
-            # Clean up the response
-            response = response.replace("Let me help you with that.", "").strip()
+            # Extract the response (everything after "Assistant:")
+            response = outputs[0]["generated_text"].split("Assistant:")[-1].strip()
             
-            # If response is empty or just whitespace, return a default message
-            if not response:
-                return "I apologize, but I couldn't generate a proper response. Please try rephrasing your question."
-                
+            # Display as markdown if requested
+            if display_markdown:
+                display(Markdown(response))
+            
             return response
             
         except Exception as e:
