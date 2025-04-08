@@ -83,7 +83,7 @@ class LLMWrapper:
             model=self.model,
             tokenizer=self.tokenizer,
             device_map="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
         )
 
     def load_examples_from_json(self, filepath: str) -> List[Dict[str, str]]:

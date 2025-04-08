@@ -19,7 +19,7 @@ def generate_text():
         # Get request data
         data = request.get_json()
         prompt = data.get('prompt')
-        task_type = data.get('task_type', 'general')
+        task_type = llm.infer_task_type(prompt)
         
         # Validate input
         if not prompt:
