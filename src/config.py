@@ -19,7 +19,7 @@ GENERATION_CONFIGS: Dict[str, Dict[str, Any]] = {
         "repetition_penalty": 1,
         "do_sample": False
     },
-    "mathematic": {
+    "math": {
         "max_new_tokens": 812,
         "temperature": 0.0,
         "top_p": 1, 

@@ -147,7 +147,7 @@ class LLMWrapper:
         
         # Build prompt
         prompt = "Classify the following text into one of the following categories:\n"
-        prompt += "general, code, mathematic, creative, concise, educational, analytical, debug, research, technical\n\n"
+        prompt += "general, code, math, creative, concise, educational, analytical, debug, research, technical\n\n"
         
         for ex in examples:
             prompt += f"Text: {ex['text']}\nLabel: {ex['label']}\n\n"
@@ -156,12 +156,12 @@ class LLMWrapper:
         
         try:
             result = self.classifier(prompt, max_new_tokens=10, return_full_text=False)
-            prediction = result[0]["generated_text"].strip().split()[0]  # Just grab the first word
+            prediction = result[0]["generated_text"].strip().split()[0]
             
             # Sanitize to known labels (optional)
             known_labels = [
-                "general", "code", "mathematic", "creative", "concise", 
-                "educational", "analytical", "debug", "research", "complex"
+                "general", "code", "math", "creative", "concise", 
+                "educational", "analytical", "debug", "research", "technical"
             ]
             for label in known_labels:
                 if prediction.lower().startswith(label.lower()):

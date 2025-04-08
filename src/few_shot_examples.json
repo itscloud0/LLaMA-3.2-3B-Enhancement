@@ -1,6 +1,6 @@
 [
     {"text": "Sort this list in Python", "label": "code"},
-    {"text": "What's the integral of x squared?", "label": "mathematic"},
+    {"text": "What's the integral of x squared?", "label": "math"},
     {"text": "Write a poem about the moon", "label": "creative"},
     {"text": "Summarize the key points of this article", "label": "general"},
     {"text": "Can you help me fix this code? \r\ndef calculate_average(numbers): \r\nif len(numbers) = 0: \r\nreturn 0 \r\nelse: \r\nreturn sum(numbers) / len(numbers)", "label": "debug"},
@@ -8,7 +8,7 @@
     {"text": "Compare and contrast logical positivism and postmodernism", "label": "analytical"},
     {"text": "Analyze the impact of the industrial revolution on Germany in the 18th century", "label": "analytical"},
     {"text": "Write a function in C to sort an array", "label": "code"},
-    {"text": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?", "label": "mathematic"},
+    {"text": "Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?", "label": "math"},
     {"text": "Write a short story about a baby and a crow", "label": "creative"},
     {"text": "Explain the difference between REST and GraphQL.", "label": "technical"},
     {"text": "What is the longest river in the US?", "label": "concise"},
