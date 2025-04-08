@@ -60,7 +60,7 @@ def run_interactive_mode(wrapper: LLMWrapper):
                 
             print("\nGenerating response...")
             start_time = time.time()
-            auto_type = infer_task_type_llm(..., wrapper)
+            auto_type = infer_task_type_llm(input_text, wrapper)
             print(f"Inferred task type: {auto_type}")
             response = wrapper.generate_text(input_text, task_type=auto_type)
             end_time = time.time()
