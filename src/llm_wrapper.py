@@ -1,5 +1,6 @@
 import torch
 from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
+import json
 import os
 from dotenv import load_dotenv
 from IPython.display import Markdown, display
@@ -42,6 +43,7 @@ class LLMWrapper:
             
             # Initialize pipeline with default configuration
             self.pipe = self.configure_pipeline()
+            self.classifier = self.configure_classifier()
             
             print(f"Model {model_path} loaded successfully")
             
@@ -73,15 +75,30 @@ class LLMWrapper:
             trust_remote_code=True,
             **config
         )
+    
+    def configure_classifier(self):
+        """Configure a text classification pipeline."""
+        return pipeline(
+            task="text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
+            device_map="auto",
+            trust_remote_code=True
+        )
 
+    def load_examples_from_json(self, filepath: str) -> List[Dict[str, str]]:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+   
+     
     def format_prompt(self, system_prompt: str, user_input: str, task_type: str = "general") -> str:
         """Format the prompt with system and user messages."""
         config_prompt = self.get_config_prompt(task_type)
-        return f"""System: {system_prompt} {config_prompt}
-
-User: {user_input}
-
-Assistant:"""
+        return (
+            f"System: {system_prompt} {config_prompt}\n\n"
+            f"User: {user_input}\n\n"
+            f"Assistant:"
+        )
 
     def generate_text(
         self, 
@@ -121,3 +138,36 @@ Assistant:"""
         except Exception as e:
             print(f"Error generating text: {e}")
             return "I apologize, but I encountered an error while generating the response." 
+        
+    def infer_task_type(self, query: str) -> str:
+        """Classify query using few-shot prompt-based learning with the language model."""
+        
+        # Few-shot examples
+        examples = self.load_examples_from_json("src/few_shot_examples.json")
+        
+        # Build prompt
+        prompt = "Classify the following text into one of the following categories:\n"
+        prompt += "general, code, mathematic, creative, concise, educational, analytical, debug, research, technical\n\n"
+        
+        for ex in examples:
+            prompt += f"Text: {ex['text']}\nLabel: {ex['label']}\n\n"
+
+        prompt += f"Text: {query}\nLabel:"
+        
+        try:
+            result = self.classifier(prompt, max_new_tokens=10, return_full_text=False)
+            prediction = result[0]["generated_text"].strip().split()[0]  # Just grab the first word
+            
+            # Sanitize to known labels (optional)
+            known_labels = [
+                "general", "code", "mathematic", "creative", "concise", 
+                "educational", "analytical", "debug", "research", "complex"
+            ]
+            for label in known_labels:
+                if prediction.lower().startswith(label.lower()):
+                    return label
+            return "general"
+        
+        except Exception as e:
+            print(f"Error classifying task type: {e}")
+            return "general"

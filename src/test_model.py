@@ -8,25 +8,21 @@ from typing import List, Dict
 # Add the src directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+def infer_task_type_llm(query: str, wrapper: LLMWrapper) -> str:
+    """Infers the task type using the LLM wrapper."""
+    try:
+        classification = wrapper.infer_task_type(query)
+        return classification
+    except Exception as e:
+        print(f"Failed to classify with LLM: {e}")
+        return "general"
+
 def run_interactive_mode(wrapper: LLMWrapper):
     """Run the model in interactive mode with task type selection."""
-    print("\n=== Interactive Mode ===")
-    print("Available task types:")
-    print("1. general - General responses")
-    print("2. code - Programming and code generation")
-    print("3. math - Mathematical explanations")
-    print("4. creative - Creative writing")
-    print("5. technical - Technical explanations")
-    print("6. concise - Brief responses")
-    print("7. educational - Teaching and explanations")
-    print("8. analytical - Analysis and problem-solving")
-    print("9. debug - Debugging assistance")
-    print("10. research - Research and academic responses")
     print("\nCommands:")
-    print("- 'exit' or 'q' to quit")
-    print("- 'clear' to clear the screen")
-    print("- 'help' to show this help message")
-    print("- 'task <type>' to switch task type (e.g., 'task code')")
+    print("1 - 'exit' or 'q' to quit")
+    print("2 - 'clear' to clear the screen")
+    print("3 - 'help' to show this menu and task types")
     print("======================\n")
     
     task_type = "general"
@@ -53,27 +49,20 @@ def run_interactive_mode(wrapper: LLMWrapper):
                 print("9. debug - Debugging assistance")
                 print("10. research - Research and academic responses")
                 print("\nCommands:")
-                print("- 'exit' or 'q' to quit")
-                print("- 'clear' to clear the screen")
-                print("- 'help' to show this help message")
-                print("- 'task <type>' to switch task type (e.g., 'task code')")
-                continue
-            elif input_text.lower().startswith('task '):
-                new_task = input_text[5:].strip().lower()
-                if new_task in ['general', 'code', 'math', 'creative', 'technical', 
-                              'concise', 'educational', 'analytical', 'debug', 'research']:
-                    task_type = new_task
-                    print(f"\nTask type set to: {task_type}")
-                else:
-                    print("\nInvalid task type. Available types: general, code, math, creative, technical, concise, educational, analytical, debug, research")
+                print("1 - 'exit' or 'q' to quit")
+                print("2 - 'clear' to clear the screen")
+                print("3 - 'help' to show this menu and task types")
+                print("======================\n")
                 continue
                 
             if not input_text:
                 continue
                 
-            print(f"\nGenerating response (task type: {task_type})...")
+            print("\nGenerating response...")
             start_time = time.time()
-            response = wrapper.generate_text(input_text, task_type=task_type)
+            auto_type = infer_task_type_llm(..., wrapper)
+            print(f"Inferred task type: {auto_type}")
+            response = wrapper.generate_text(input_text, task_type=auto_type)
             end_time = time.time()
             
             print(f"\nResponse: {response}")
@@ -129,9 +118,11 @@ def run_test_prompts(wrapper: LLMWrapper):
         print(f"Task type: {test_case['task_type']}")
         print("Generating response...")
         start_time = time.time()
+        auto_type = infer_task_type_llm(test_case["prompt"], wrapper)
+        print(f"Inferred task type: {auto_type}")
         response = wrapper.generate_text(
             test_case["prompt"],
-            task_type=test_case["task_type"]
+            task_type=auto_type
         )
         end_time = time.time()
         
