@@ -1,0 +1,4 @@
+Large language models are transforming how we interact with machines. These models are capable of understanding and generating human-like text.
+Quantization helps reduce the memory footprint and makes inference faster.
+In this experiment, we are quantizing the LLaMA 3 model using AWQ to fit within GPU memory constraints while maintaining performance.
+The calibration dataset is critical to ensure the model is compressed in a way that preserves accuracy across common input patterns.
