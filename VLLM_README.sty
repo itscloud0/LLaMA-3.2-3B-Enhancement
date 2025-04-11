@@ -1,0 +1,34 @@
+VLLM explanation 
+
+VLLM is a high-performance and memory-efficient inference engine for Large Language Models (LLMs) like LLaMA. It is designed to maximize the throughput and responsiveness of models during inference.
+How does vLLM work? Normal Transformers process one token at a time, and store attention values in what's called a KV (Key-Value) cache. This KV cache grows with:
+
+- The sequence length
+- The model size (number of layers × hidden units)
+- The number of concurrent users or tokens being processed
+
+We use a Vllm since it introduces a smarter technique called PagedAttention which:
+
+-Dynamically allocates and deallocates memory pages for KV cache
+-Reduces GPU memory fragmentation
+-Enables much higher throughput
+
+This makes vLLM good since we can do 
+- faster inference
+- Hosting multiple concurrent requests
+- Running models with longer sequences or limited GPU memory
+
+We switched to vLLM because:
+
+It loads the model once, keeps it in memory, and responds to requests quickly
+It's much faster than Hugging Face Transformers for large models
+It can handle longer sequences with less memory overhead
+It's easier to run production-level inference on local or remote GPUs
+
+
+What we did in the code
+
+Rewrote llm_wrapper.py to use vllm.LLM instead of HuggingFace's pipeline
+Added dynamic memory adaptation based on your GPU's free VRAM
+Updated config.py, test_model.py, and api.py to work with the new wrapper
+Kept the prompts, task types, and logic intact
