@@ -1,0 +1,16 @@
+# Core ML dependencies
+torch>=2.0.0
+transformers>=4.30.0
+accelerate>=0.20.0
+bitsandbytes>=0.41.0
+sentencepiece>=0.1.99
+
+# API dependencies
+flask>=2.0.0
+flask-cors>=3.0.0
+waitress>=2.1.2  # Production WSGI server
+
+# Environment and utilities
+python-dotenv>=1.0.0
+ipython>=8.0.0
+requests>=2.31.0  # For making HTTP requests 
