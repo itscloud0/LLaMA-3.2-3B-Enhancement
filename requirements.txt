@@ -14,3 +14,13 @@ waitress>=2.1.2  # Production WSGI server
 python-dotenv>=1.0.0
 ipython>=8.0.0
 requests>=2.31.0  # For making HTTP requests 
+
+# Additional ML-related dependencies
+vllm
+flash-attn --no-build-isolation
+
+
+#pip install vllm
+# downlaod the llm 
+# pip install flash-attn --no-build-isolation usies A100/H100 when neede need to chagne location of LLM 
+# module load cuda-12.4.1-gcc-12.1.0
