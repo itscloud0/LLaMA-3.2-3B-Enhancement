@@ -4,6 +4,7 @@ from typing import Dict, Any
 from config import GENERATION_CONFIGS, CONFIG_PROMPTS
 from IPython.display import Markdown, display
 from vllm import LLM, SamplingParams
+import json
 from collections import Counter  # <-- move this to top
 
 # Load environment variables from .env file
@@ -54,24 +55,53 @@ class LLMWrapper:
         return CONFIG_PROMPTS.get(task_type, CONFIG_PROMPTS["general"])
 
     def format_prompt(self, system_prompt: str, user_input: str, task_type: str = "general") -> str:
+        """Format the prompt with system and user messages."""
         config_prompt = self.get_config_prompt(task_type)
-        return f"""System: {system_prompt} {config_prompt}
+        return (
+            f"System: {system_prompt} {config_prompt}\n\n"
+            f"User: {user_input}\n\n"
+            f"Assistant:"
+        )
 
-User: {user_input}
+    def load_classification_examples(self, json_path: str = "src/few_shot_examples.json") -> list:
+        try:
+            with open(json_path, "r") as f:
+                examples = json.load(f)
+            return examples
+        except Exception as e:
+            print(f"Error loading classification examples: {e}")
+            return []
 
-Assistant:"""
+    def build_classification_prompt(self, input_text: str, examples: list) -> str:
+        prompt = (
+            "You are an AI that classifies user inputs into one of these categories: "
+            "code, math, creative, general, debug, analytical, technical, concise.\n"
+            "Given an input, respond ONLY with the correct label.\n\n"
+        )
+
+        # Add few-shot examples
+        for ex in examples:
+            prompt += f"Input: {ex['text']}\nLabel: {ex['label']}\n\n"
+
+        # Add the real input
+        prompt += f"Input: {input_text}\nLabel:"
+        return prompt
 
     def generate_text(
         self, 
         input_text: str,
-        system_prompt: str = "You are a helpful AI assistant. Please provide your response after the User's question. Make sure to be clear, accurate, and follow the task-specific guidelines provided below.",
-        task_type: str = "general",
+        system_prompt: str = "You are a helpful AI assistant. Please provide your response after the User's question. If given a multiple choice question, make sure to say which choice you think it is. Make sure to be clear, accurate, and follow the task-specific guidelines provided below.",
+        task_type: str = None,
         config_type: str = "default",
-        display_markdown: bool = False, #added
-        chain_of_thought: bool = False, #addded
+        display_markdown: bool = False, 
+        chain_of_thought: bool = False, 
         sample_n: int = 1                  
     ) -> str:
         try:
+            if task_type is None:
+                task_type = self.classify_task_type_vllm(input_text)
+                print(f"Inferred task_type: {task_type}")
+
             # Automatically turn on CoT if not specified manually
             if not chain_of_thought:
                 if should_use_chain_of_thought(input_text):
@@ -121,3 +151,32 @@ Assistant:"""
         except Exception as e:
             print(f"Error generating text: {e}")
             return "I apologize, but I encountered an error while generating the response."
+    
+    def classify_task_type_vllm(self, input_text: str) -> str:
+        examples = self.load_classification_examples()
+        prompt = self.build_classification_prompt(input_text, examples)
+
+        sampling_params = SamplingParams(
+            temperature=0.0,  # deterministic
+            top_p=1.0,
+            max_tokens=10,  # tiny output
+            n=1
+        )
+
+        try:
+            outputs = self.llm.generate([prompt], sampling_params)
+            generated_text = outputs[0].outputs[0].text.strip().lower()
+
+            # Clean possible extra text
+            generated_text = generated_text.split()[0]
+
+            allowed_labels = ["code", "math", "creative", "general", "debug", 
+                "analytical", "technical", "concise"]
+
+            if generated_text in allowed_labels:
+                return generated_text
+            else:
+                return "general"  # fallback
+        except Exception as e:
+            print(f"Error classifying task type: {e}")
+            return "general"

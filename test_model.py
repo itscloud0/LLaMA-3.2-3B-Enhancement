@@ -11,8 +11,20 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def infer_task_type_llm(query: str, wrapper: LLMWrapper) -> str:
     """Infers the task type using the LLM wrapper."""
     try:
-        classification = wrapper.infer_task_type(query)
-        return classification
+        classification = wrapper.classify_task_type_vllm(query)
+        
+        # Ensure classification is one of the valid task types
+        valid_task_types = [
+            "general", "code", "math", "creative", "technical", 
+            "concise", "educational", "analytical", "debug", "research"
+        ]
+        
+        if classification in valid_task_types:
+            return classification
+        else:
+            print(f"Invalid classification: {classification}. Falling back to 'general'.")
+            return "general"
+    
     except Exception as e:
         print(f"Failed to classify with LLM: {e}")
         return "general"
@@ -80,7 +92,7 @@ def run_interactive_mode(wrapper: LLMWrapper, force_cot: bool = False, sample_n:
 
             response = wrapper.generate_text(
                 input_text,
-                task_type=task_type,
+                task_type=auto_type,
                 chain_of_thought=force_cot,
                 sample_n=sample_n
             )
