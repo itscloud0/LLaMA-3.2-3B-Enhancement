@@ -17,39 +17,55 @@ def evaluate_model(wrapper: LLMWrapper, json_file: str, threshold: int = 90):
     
     correct_count = 0
     total_count = len(data)
+    total_similarity_score = 0  # To track the sum of all similarity scores
+    error_count = 0
     
     print("\n=== Model Evaluation ===")
     
     for entry in data:
-        question = entry["question"]
-        expected_answer = entry["answer"]
+        question = str(entry["question"])
+        expected_answer = str(entry["answer"])
         
-        # Generate response using the model
-        start_time = time.time()
-        model_response = wrapper.generate_text(question, task_type="general")  # or any other task type
-        end_time = time.time()
-        
-        print(f"Question: {question}")
-        print(f"Expected Answer: {expected_answer}")
-        print(f"Model Response: {model_response}")
-        print(f"Time taken: {end_time - start_time:.2f} seconds")
-        print("=" * 50)
-        
-        # Fuzzy matching comparison
-        similarity_score = fuzz.token_sort_ratio(model_response.strip(), expected_answer.strip())
-        print(f"Similarity score: {similarity_score}%")
+        try:
+            # Generate response using the model
+            start_time = time.time()
+            model_response = wrapper.generate_text(question)
+            end_time = time.time()
+            
+            print(f"Question: {question}")
+            print(f"Expected Answer: {expected_answer}")
+            print(f"Model Response: {model_response}")
+            print(f"Time taken: {end_time - start_time:.2f} seconds")
+            
+            # Fuzzy matching comparison
+            similarity_score = fuzz.token_sort_ratio(str(model_response).strip(), expected_answer.strip())
+            total_similarity_score += similarity_score  # Accumulate the similarity score
+            print(f"Similarity score: {similarity_score}%")
+            print("=" * 50)
 
-        # If similarity score is above the threshold, consider it correct
-        if similarity_score >= threshold:
-            correct_count += 1
+            # If similarity score is above the threshold, consider it correct
+            if similarity_score >= threshold:
+                correct_count += 1
+
+        except Exception as e:
+            print(f"Error during evaluation of question: {e}")
+            error_count += 1
+            print("Skipping this question...\n")
+            continue  # move on to next question
+
+        
     
     accuracy = correct_count / total_count * 100
+    average_similarity = total_similarity_score / (total_count - error_count) if total_count - error_count > 0 else 0
+    
     print(f"\nEvaluation complete. Accuracy: {accuracy:.2f}%")
+    print(f"Average Similarity Score: {average_similarity:.2f}%")
+    print(f"Total Errors: {error_count} out of {total_count} samples")
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate the LLM model using a .json file")
     # Default path is now set to "dev_data.json" in the current directory
-    parser.add_argument("--json_file", "-f", default="dev_data.json", help="Path to the JSON file containing questions and answers")
+    parser.add_argument("--json_file", "-f", default="data/dev_data.json", help="Path to the JSON file containing questions and answers")
     parser.add_argument("--threshold", "-t", type=int, default=90, help="Fuzzy matching similarity threshold (default is 90)")
     args = parser.parse_args()
     
