@@ -5,10 +5,15 @@ from config import GENERATION_CONFIGS, CONFIG_PROMPTS
 from IPython.display import Markdown, display
 from vllm import LLM, SamplingParams
 import json
-from collections import Counter  # <-- move this to top
+from collections import Counter
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
+
+# Get directory path from .env
+DIRECTORY_PATH = os.getenv('DIRECTORY_PATH')
+if not DIRECTORY_PATH:
+    raise ValueError("DIRECTORY_PATH environment variable is not set")
 
 def should_use_chain_of_thought(input_text: str) -> bool:
     reasoning_keywords = [
@@ -24,9 +29,10 @@ def should_use_chain_of_thought(input_text: str) -> bool:
     return False
 
 class LLMWrapper:
-    def __init__(self, model_path: str = "/scratch/jjosep31/models/llama-3.2-3b-hf"):
+    def __init__(self, model_path: str = None):
         try:
-            self.model_id = model_path
+            # Use provided model_path or construct from DIRECTORY_PATH
+            self.model_id = model_path or f"/scratch/{DIRECTORY_PATH}/llama-3.2-3b-hf"
             self.HF_TOKEN = os.getenv("HF_TOKEN")
             if not self.HF_TOKEN:
                 raise ValueError("HF_TOKEN environment variable is not set")
@@ -40,9 +46,9 @@ class LLMWrapper:
                 trust_remote_code=True,
                 tokenizer=self.model_id,
                 tokenizer_revision="main",
-                download_dir="/scratch/jjosep31/models",
+                download_dir=f"/scratch/{DIRECTORY_PATH}",
             )
-            print(f"Model {model_path} loaded successfully with vLLM")
+            print(f"Model {self.model_id} loaded successfully with vLLM")
 
         except Exception as e:
             print(f"Error initializing model: {e}")
